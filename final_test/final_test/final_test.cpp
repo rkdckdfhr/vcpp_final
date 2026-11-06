@@ -120,11 +120,72 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //  WM_PAINT    - 주 창을 그립니다.
 //  WM_DESTROY  - 종료 메시지를 게시하고 반환합니다.
 //
-//
+// 
+
+
+#define OBJECT_CHAR                     80              /// 나, 적 등 캐릭터에 대한 크기값 ( 좌상단 + 80 )
+#define OBJECT_TRAP                     60              /// 잔디나 함정에 대한 크기값 ( 좌상단 + 60 )
+#define OBJECT_ITEM                     40              /// 아이템에 대한 크기값 ( 좌상단 + 40 )
+
+
+/// 움직이거나 이벤트가 발생하는 객체들 생성 ex ) 캐릭터, 풀숲 등
+
+RECT player;            /// 게임을 플레이하는 자신 객체
+
+RECT enemy;             /// 게임에 나오는 상대에 대한 객체
+RECT enemy2;
+
+RECT hitArea;           /// 상대의 시야 범위 ( 마주치면 배틀 )에 대한 객체
+
+/// 임시 스레드
+DWORD WINAPI Thread(LPVOID param)
+{
+    return 0;
+}
+
+
+/// 객체 생성을 지원해주는 함수 \
+    인수 설명 : RECT rectParam = 생성하고자 하는 객체 \
+               int left, top = 객체의 좌상단 값 지정 \
+               int objType = 1: 캐릭터  2: 함정(잔디)  3: 아이템 ( 기본값 3 )
+RECT CreateRect(RECT rectParam, int left, int top, int objType = 3)
+{
+
+    rectParam.left = left;
+    rectParam.top = top;
+
+    if (1 == objType)
+    {
+        rectParam.right = left + OBJECT_CHAR;
+        rectParam.bottom = top + OBJECT_CHAR;
+    }
+    else if (2 == objType)
+    {
+        rectParam.right = left + OBJECT_TRAP;
+        rectParam.bottom = top + OBJECT_TRAP;
+    }
+    else
+    {
+        rectParam.right = left + OBJECT_ITEM;
+        rectParam.bottom = top + OBJECT_ITEM;
+    }
+    return rectParam;
+}
+
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
+    case WM_CREATE:
+    {
+        player = CreateRect(player, 30, 20, 1);
+        enemy = CreateRect(enemy, 250, 90, 1);
+        enemy2 = CreateRect(enemy, 750, 550, 1);
+    }
+        break;
+
+
     case WM_COMMAND:
         {
             int wmId = LOWORD(wParam);
@@ -146,7 +207,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
             PAINTSTRUCT ps;
             BeginPaint(hWnd, &ps);
+            HDC hdc = GetDC(hWnd);
             // TODO: 여기에 그리기 코드를 추가합니다...
+            /// 내 객체
+            Ellipse(hdc, player.left, player.top, player.right, player.bottom);
+            
+            /// 상대 객체
+            Ellipse(hdc, enemy.left, enemy.top, enemy.right, enemy.bottom);
+            Ellipse(hdc, enemy2.left, enemy2.top, enemy2.right, enemy2.bottom);
+            
+
             EndPaint(hWnd, &ps);
         }
         break;
