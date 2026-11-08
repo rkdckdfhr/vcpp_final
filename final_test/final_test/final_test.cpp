@@ -98,7 +98,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    hInst = hInstance; // 인스턴스 핸들을 전역 변수에 저장합니다.
 
    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
+      0, 0, 1650, 850, nullptr, nullptr, hInstance, nullptr);
 
    if (!hWnd)
    {
@@ -122,11 +122,17 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //
 // 
 
+/// 임시 스레드
+DWORD WINAPI Thread(LPVOID param)
+{
+    return 0;
+}
 
 #define OBJECT_CHAR                     80              /// 나, 적 등 캐릭터에 대한 크기값 ( 좌상단 + 80 )
 #define OBJECT_TRAP                     60              /// 잔디나 함정에 대한 크기값 ( 좌상단 + 60 )
 #define OBJECT_ITEM                     40              /// 아이템에 대한 크기값 ( 좌상단 + 40 )
-
+#define SCREEN_UI                       150             /// 캐릭터 정보창 Y 좌표
+#define SCREEN_GAME                     850             /// 게임 화면 Y 좌표
 
 /// 움직이거나 이벤트가 발생하는 객체들 생성 ex ) 캐릭터, 풀숲 등
 
@@ -137,11 +143,8 @@ RECT enemy2;
 
 RECT hitArea;           /// 상대의 시야 범위 ( 마주치면 배틀 )에 대한 객체
 
-/// 임시 스레드
-DWORD WINAPI Thread(LPVOID param)
-{
-    return 0;
-}
+RECT gameScreen;        /// 실제 게임이 이루어지는 화면
+RECT statUi;            /// 캐릭터 정보가 나올 UI 화면
 
 
 /// 객체 생성을 지원해주는 함수 \
@@ -173,15 +176,57 @@ RECT CreateRect(RECT rectParam, int left, int top, int objType = 3)
 }
 
 
+void PlayerMove(WPARAM wParam, HWND hWnd)
+{
+    for (int i = 0; i < 20; i++)
+    {
+        player.top = player.top + i;
+        player.bottom = player.top + OBJECT_CHAR;
+        Sleep(30);
+        InvalidateRect(hWnd, NULL, TRUE);
+    }
+}
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
+    case WM_KEYDOWN:
+    {
+        if (VK_UP == wParam)
+        {
+            player.top = player.top - 50;
+            player.bottom = player.top + OBJECT_CHAR;
+        }
+        else if (VK_DOWN == wParam)
+        {
+            /// 캐릭터가 끊어지지 않게 이동 할 수 있게 반복문으로 이동
+            int startPoint = player.top;            /// 이동하기 전 내 위치 정보를 저장 시작점부터 이동하게끔
+
+            for (int i = 1; i <= 20; i++)
+            {
+                player.top = startPoint + i;
+                player.bottom = player.top + OBJECT_CHAR;
+                InvalidateRect(hWnd, NULL, TRUE);
+                UpdateWindow(hWnd);
+                Sleep(20);
+            }
+        }
+        InvalidateRect(hWnd, NULL, TRUE);
+
+    }
+        break;
+
     case WM_CREATE:
     {
-        player = CreateRect(player, 30, 20, 1);
-        enemy = CreateRect(enemy, 250, 90, 1);
-        enemy2 = CreateRect(enemy, 750, 550, 1);
+        statUi.left = 0;
+        statUi.top = 0;
+        statUi.right = statUi.left + 2000;
+        statUi.bottom = statUi.top + SCREEN_UI;
+
+        player = CreateRect(player, 30, 700, 1);
+        enemy = CreateRect(enemy, 250, 170, 1);
+        enemy2 = CreateRect(enemy2, 750, 550, 1);
     }
         break;
 
@@ -209,6 +254,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             BeginPaint(hWnd, &ps);
             HDC hdc = GetDC(hWnd);
             // TODO: 여기에 그리기 코드를 추가합니다...
+            
+            /// 게임 화면 객체들
+            Rectangle(hdc, statUi.left, statUi.top, statUi.right, statUi.bottom);
+            
             /// 내 객체
             Ellipse(hdc, player.left, player.top, player.right, player.bottom);
             
