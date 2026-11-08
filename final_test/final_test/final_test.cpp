@@ -176,14 +176,65 @@ RECT CreateRect(RECT rectParam, int left, int top, int objType = 3)
 }
 
 
+#define MOVE_SPEED          4
+
+/// 플레이어 객체의 이동을 실행하는 함수 \
+    윈도우프로시저에서 wParam ( 키보드 정보 ) \
+                     hWnd ( 화면 정보 ) 를 받아와 처리
+/// MOVE_SPEED로 이동속도 결정
+
+
 void PlayerMove(WPARAM wParam, HWND hWnd)
 {
-    for (int i = 0; i < 20; i++)
+    /// 캐릭터가 끊어지지 않게 이동 할 수 있게 반복문으로 이동
+    RECT startPoint = player;            /// 이동하기 전 시작점을 담은 구조체 변수
+
+    if (VK_UP == wParam)
     {
-        player.top = player.top + i;
-        player.bottom = player.top + OBJECT_CHAR;
-        Sleep(30);
-        InvalidateRect(hWnd, NULL, TRUE);
+        for (int i = 1; i <= 20; i++)
+        {
+            player.top = startPoint.top - i;
+            player.bottom = player.top + OBJECT_CHAR;
+            InvalidateRect(hWnd, NULL, TRUE);
+            UpdateWindow(hWnd);
+            Sleep(MOVE_SPEED);
+        }
+    }
+
+    else if (VK_DOWN == wParam)
+    {
+        for (int i = 1; i <= 20; i++)
+        {
+            player.top = startPoint.top + i;
+            player.bottom = player.top + OBJECT_CHAR;
+            InvalidateRect(hWnd, NULL, TRUE);
+            UpdateWindow(hWnd);
+            Sleep(MOVE_SPEED);
+        }
+    }
+
+    else if (VK_LEFT == wParam)
+    {
+        for (int i = 1; i <= 20; i++)
+        {
+            player.left = startPoint.left - i;
+            player.right = startPoint.right - i;
+            InvalidateRect(hWnd, NULL, TRUE);
+            UpdateWindow(hWnd);
+            Sleep(MOVE_SPEED);
+        }
+    }
+
+    else if (VK_RIGHT == wParam)
+    {
+        for (int i = 1; i <= 20; i++)
+        {
+            player.left = startPoint.left + i;
+            player.right = startPoint.right + i;
+            InvalidateRect(hWnd, NULL, TRUE);
+            UpdateWindow(hWnd);
+            Sleep(MOVE_SPEED);
+        }
     }
 }
 
@@ -193,27 +244,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
     case WM_KEYDOWN:
     {
-        if (VK_UP == wParam)
-        {
-            player.top = player.top - 50;
-            player.bottom = player.top + OBJECT_CHAR;
-        }
-        else if (VK_DOWN == wParam)
-        {
-            /// 캐릭터가 끊어지지 않게 이동 할 수 있게 반복문으로 이동
-            int startPoint = player.top;            /// 이동하기 전 내 위치 정보를 저장 시작점부터 이동하게끔
-
-            for (int i = 1; i <= 20; i++)
-            {
-                player.top = startPoint + i;
-                player.bottom = player.top + OBJECT_CHAR;
-                InvalidateRect(hWnd, NULL, TRUE);
-                UpdateWindow(hWnd);
-                Sleep(20);
-            }
-        }
+        PlayerMove(wParam, hWnd);
         InvalidateRect(hWnd, NULL, TRUE);
-
     }
         break;
 
