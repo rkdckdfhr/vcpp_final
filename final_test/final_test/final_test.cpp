@@ -6,6 +6,9 @@
 
 #define MAX_LOADSTRING 100
 
+#include "Function.h"
+#include <time.h>
+
 // 전역 변수:
 HINSTANCE hInst;                                // 현재 인스턴스입니다.
 WCHAR szTitle[MAX_LOADSTRING];                  // 제목 표시줄 텍스트입니다.
@@ -98,7 +101,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    hInst = hInstance; // 인스턴스 핸들을 전역 변수에 저장합니다.
 
    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      0, 0, 1650, 850, nullptr, nullptr, hInstance, nullptr);
+      0, 0, 1650, 920, nullptr, nullptr, hInstance, nullptr);
 
    if (!hWnd)
    {
@@ -125,14 +128,13 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 /// 임시 스레드
 DWORD WINAPI Thread(LPVOID param)
 {
+    
+
+
     return 0;
 }
 
-#define OBJECT_CHAR                     80              /// 나, 적 등 캐릭터에 대한 크기값 ( 좌상단 + 80 )
-#define OBJECT_TRAP                     60              /// 잔디나 함정에 대한 크기값 ( 좌상단 + 60 )
-#define OBJECT_ITEM                     40              /// 아이템에 대한 크기값 ( 좌상단 + 40 )
-#define SCREEN_UI                       150             /// 캐릭터 정보창 Y 좌표
-#define SCREEN_GAME                     850             /// 게임 화면 Y 좌표
+
 
 /// 움직이거나 이벤트가 발생하는 객체들 생성 ex ) 캐릭터, 풀숲 등
 
@@ -142,101 +144,12 @@ RECT enemy;             /// 게임에 나오는 상대에 대한 객체
 RECT enemy2;
 
 RECT hitArea;           /// 상대의 시야 범위 ( 마주치면 배틀 )에 대한 객체
+RECT hitArea2;         
 
 RECT gameScreen;        /// 실제 게임이 이루어지는 화면
 RECT statUi;            /// 캐릭터 정보가 나올 UI 화면
 
 
-/// 객체 생성을 지원해주는 함수 \
-    인수 설명 : RECT rectParam = 생성하고자 하는 객체 \
-               int left, top = 객체의 좌상단 값 지정 \
-               int objType = 1: 캐릭터  2: 함정(잔디)  3: 아이템 ( 기본값 3 )
-RECT CreateRect(RECT rectParam, int left, int top, int objType = 3)
-{
-
-    rectParam.left = left;
-    rectParam.top = top;
-
-    if (1 == objType)
-    {
-        rectParam.right = left + OBJECT_CHAR;
-        rectParam.bottom = top + OBJECT_CHAR;
-    }
-    else if (2 == objType)
-    {
-        rectParam.right = left + OBJECT_TRAP;
-        rectParam.bottom = top + OBJECT_TRAP;
-    }
-    else
-    {
-        rectParam.right = left + OBJECT_ITEM;
-        rectParam.bottom = top + OBJECT_ITEM;
-    }
-    return rectParam;
-}
-
-
-#define MOVE_SPEED          4
-
-/// 플레이어 객체의 이동을 실행하는 함수 \
-    윈도우프로시저에서 wParam ( 키보드 정보 ) \
-                     hWnd ( 화면 정보 ) 를 받아와 처리
-/// MOVE_SPEED로 이동속도 결정
-
-
-void PlayerMove(WPARAM wParam, HWND hWnd)
-{
-    /// 캐릭터가 끊어지지 않게 이동 할 수 있게 반복문으로 이동
-    RECT startPoint = player;            /// 이동하기 전 시작점을 담은 구조체 변수
-
-    if (VK_UP == wParam)
-    {
-        for (int i = 1; i <= 20; i++)
-        {
-            player.top = startPoint.top - i;
-            player.bottom = player.top + OBJECT_CHAR;
-            InvalidateRect(hWnd, NULL, TRUE);
-            UpdateWindow(hWnd);
-            Sleep(MOVE_SPEED);
-        }
-    }
-
-    else if (VK_DOWN == wParam)
-    {
-        for (int i = 1; i <= 20; i++)
-        {
-            player.top = startPoint.top + i;
-            player.bottom = player.top + OBJECT_CHAR;
-            InvalidateRect(hWnd, NULL, TRUE);
-            UpdateWindow(hWnd);
-            Sleep(MOVE_SPEED);
-        }
-    }
-
-    else if (VK_LEFT == wParam)
-    {
-        for (int i = 1; i <= 20; i++)
-        {
-            player.left = startPoint.left - i;
-            player.right = startPoint.right - i;
-            InvalidateRect(hWnd, NULL, TRUE);
-            UpdateWindow(hWnd);
-            Sleep(MOVE_SPEED);
-        }
-    }
-
-    else if (VK_RIGHT == wParam)
-    {
-        for (int i = 1; i <= 20; i++)
-        {
-            player.left = startPoint.left + i;
-            player.right = startPoint.right + i;
-            InvalidateRect(hWnd, NULL, TRUE);
-            UpdateWindow(hWnd);
-            Sleep(MOVE_SPEED);
-        }
-    }
-}
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -244,7 +157,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
     case WM_KEYDOWN:
     {
-        PlayerMove(wParam, hWnd);
+        PlayerMove(wParam, hWnd, &player);
         InvalidateRect(hWnd, NULL, TRUE);
     }
         break;
@@ -258,7 +171,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         player = CreateRect(player, 30, 700, 1);
         enemy = CreateRect(enemy, 250, 170, 1);
-        enemy2 = CreateRect(enemy2, 750, 550, 1);
+        enemy2 = CreateRect(enemy2, 1020, 750, 1);
+
+        hitArea = CreateHit(&enemy);
+        hitArea2 = CreateHit(&enemy2);
     }
         break;
 
@@ -297,6 +213,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             Ellipse(hdc, enemy.left, enemy.top, enemy.right, enemy.bottom);
             Ellipse(hdc, enemy2.left, enemy2.top, enemy2.right, enemy2.bottom);
             
+            /// 히트박스 객체
+            Rectangle(hdc, hitArea.left, hitArea.top, hitArea.right, hitArea.bottom);
+            Rectangle(hdc, hitArea2.left, hitArea2.top, hitArea2.right, hitArea2.bottom);
 
             EndPaint(hWnd, &ps);
         }
