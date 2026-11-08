@@ -27,9 +27,15 @@
     <ClInclude Include="final_test.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="Function.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="final_test.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Function.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
