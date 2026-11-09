@@ -7,7 +7,10 @@
 #define MAX_LOADSTRING 100
 
 #include "Function.h"
+#include "MoveThread.h"
 #include <time.h>
+
+
 
 // 전역 변수:
 HINSTANCE hInst;                                // 현재 인스턴스입니다.
@@ -125,14 +128,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //
 // 
 
-/// 임시 스레드
-DWORD WINAPI Thread(LPVOID param)
-{
-    
 
-
-    return 0;
-}
 
 
 
@@ -162,6 +158,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
         break;
 
+    case WM_LBUTTONDOWN:
+    {
+        //TINFO threadInfo = { 0, };
+        //threadInfo.hWnd = hWnd;
+        //threadInfo.hitBox = enemy;
+
+        TINFO threadInfo = { 0, };
+        threadInfo.hWnd = hWnd;
+        threadInfo.hitBox = enemy;
+
+        CreateThread(NULL, 0, MoveThread, (LPVOID)&threadInfo, 0, NULL);
+    }
+        break;
+
     case WM_CREATE:
     {
         statUi.left = 0;
@@ -175,6 +185,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         hitArea = CreateHit(&enemy);
         hitArea2 = CreateHit(&enemy2);
+
+
+
     }
         break;
 
@@ -214,7 +227,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             Ellipse(hdc, enemy2.left, enemy2.top, enemy2.right, enemy2.bottom);
             
             /// 히트박스 객체
-            Rectangle(hdc, hitArea.left, hitArea.top, hitArea.right, hitArea.bottom);
+            //Rectangle(hdc, hitArea.left, hitArea.top, hitArea.right, hitArea.bottom);
             Rectangle(hdc, hitArea2.left, hitArea2.top, hitArea2.right, hitArea2.bottom);
 
             EndPaint(hWnd, &ps);
