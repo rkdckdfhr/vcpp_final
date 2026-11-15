@@ -7,9 +7,11 @@
 #define MAX_LOADSTRING 100
 
 #include "Function.h"
-#include "MoveThread.h"
+//#include "MoveThread.h"
 #include <time.h>
+#include <stdlib.h>
 
+#define HIT_SIZE                        400             /// 상대 객체와 마주치게 하는 히트박스 사이즈
 
 
 // 전역 변수:
@@ -145,12 +147,40 @@ RECT hitArea2;
 RECT gameScreen;        /// 실제 게임이 이루어지는 화면
 RECT statUi;            /// 캐릭터 정보가 나올 UI 화면
 
-
+int randNum = 0;        /// 0: 상, 1: 우, 2: 하, 3: 좌
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
+    case WM_TIMER:
+    {
+        if (1 == wParam)
+        {
+            randNum = rand() % 4;
+
+            switch (randNum)
+            {
+            case 0: /// 상
+                hitArea = { enemy.left, enemy.top - HIT_SIZE, enemy.right, enemy.top };
+                break;
+            case 1: /// 우
+                hitArea = { enemy.right, enemy.top, enemy.right + HIT_SIZE, enemy.bottom };
+                break;
+            case 2: /// 하
+                hitArea = { enemy.left, enemy.bottom, enemy.right, enemy.bottom + HIT_SIZE };
+                break;
+            case 3: /// 좌
+                hitArea = { enemy.left - HIT_SIZE, enemy.top, enemy.left, enemy.bottom };
+                break;
+            }
+
+            /// 히트박스 재생성
+            InvalidateRect(hWnd, NULL, TRUE);
+        }
+        
+    }
+        break;
     case WM_KEYDOWN:
     {
         PlayerMove(wParam, hWnd, &player);
@@ -164,11 +194,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         //threadInfo.hWnd = hWnd;
         //threadInfo.hitBox = enemy;
 
-        TINFO threadInfo = { 0, };
-        threadInfo.hWnd = hWnd;
-        threadInfo.hitBox = enemy;
 
-        CreateThread(NULL, 0, MoveThread, (LPVOID)&threadInfo, 0, NULL);
+        //CreateThread(NULL, 0, MoveThread, (LPVOID)&threadInfo, 0, NULL);
     }
         break;
 
@@ -183,10 +210,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         enemy = CreateRect(enemy, 250, 170, 1);
         enemy2 = CreateRect(enemy2, 1020, 750, 1);
 
-        hitArea = CreateHit(&enemy);
+        hitArea = hitArea = { enemy.left, enemy.top - HIT_SIZE, enemy.right, enemy.top };;
         hitArea2 = CreateHit(&enemy2);
 
-
+        /// 1.5초마다 WM_TIMER 호출
+        SetTimer(hWnd, 1, 1500, NULL);
+        srand(time(NULL));
 
     }
         break;
@@ -212,8 +241,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_PAINT:
         {
             PAINTSTRUCT ps;
-            BeginPaint(hWnd, &ps);
-            HDC hdc = GetDC(hWnd);
+            HDC hdc = BeginPaint(hWnd, &ps);
             // TODO: 여기에 그리기 코드를 추가합니다...
             
             /// 게임 화면 객체들
@@ -227,7 +255,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             Ellipse(hdc, enemy2.left, enemy2.top, enemy2.right, enemy2.bottom);
             
             /// 히트박스 객체
-            //Rectangle(hdc, hitArea.left, hitArea.top, hitArea.right, hitArea.bottom);
+            Rectangle(hdc, hitArea.left, hitArea.top, hitArea.right, hitArea.bottom);
             Rectangle(hdc, hitArea2.left, hitArea2.top, hitArea2.right, hitArea2.bottom);
 
             EndPaint(hWnd, &ps);
